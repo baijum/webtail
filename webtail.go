@@ -50,7 +50,6 @@ func reader(ws *websocket.Conn) {
 }
 
 func writer(ws *websocket.Conn) {
-	lastError := ""
 	pingTicker := time.NewTicker(pingPeriod)
 	fileTicker := time.NewTicker(filePeriod)
 	defer func() {
@@ -64,17 +63,7 @@ func writer(ws *websocket.Conn) {
 	for {
 		select {
 		case <-fileTicker.C:
-			var p []byte
-			var err error
-			p, err = r.ReadBytes('\n')
-			if err != nil {
-				if s := err.Error(); s != lastError {
-					lastError = s
-					p = []byte(lastError)
-				}
-			} else {
-				lastError = ""
-			}
+			p, _ := r.ReadBytes('\n')
 
 			if p != nil {
 				ws.SetWriteDeadline(time.Now().Add(writeWait))
