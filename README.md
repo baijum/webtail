@@ -1,6 +1,6 @@
-# webtail
+# Webtail
 
-Webtail stream the log file content to web.
+Webtail stream file content to web.
 
 Usage:
 
