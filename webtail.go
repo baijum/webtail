@@ -23,7 +23,7 @@ const (
 	pingPeriod = (pongWait * 9) / 20
 
 	// Poll file for changes with this period.
-	filePeriod = 200 * time.Millisecond
+	filePeriod = 10 * time.Millisecond
 )
 
 var (
@@ -35,20 +35,6 @@ var (
 		WriteBufferSize: 1024,
 	}
 )
-
-func readFile(f *os.File) ([]byte, error) {
-	scanner := bufio.NewScanner(f)
-	var out string
-
-	for scanner.Scan() {
-		out = out + "\n" + scanner.Text()
-	}
-
-	if err := scanner.Err(); err != nil {
-		return []byte(out), err
-	}
-	return []byte(out), nil
-}
 
 func reader(ws *websocket.Conn) {
 	defer ws.Close()
@@ -73,14 +59,14 @@ func writer(ws *websocket.Conn) {
 		ws.Close()
 	}()
 	f, _ := os.Open(filename)
+	r := bufio.NewReader(f)
 	defer f.Close()
 	for {
 		select {
 		case <-fileTicker.C:
 			var p []byte
 			var err error
-
-			p, err = readFile(f)
+			p, err = r.ReadBytes('\n')
 			if err != nil {
 				if s := err.Error(); s != lastError {
 					lastError = s
