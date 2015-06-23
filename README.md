@@ -6,7 +6,7 @@ Usage:
 
 ```bash
 go get github.com/baijum/webtail
-webtail -addr=:8081 [file.log]
+webtail -addr=:8080 [file.log]
 ```
 
 The ``-addr`` option can be used to specify the host and port number.
@@ -21,4 +21,4 @@ This helps to use `tail` together with `webtail`:
 tail -f file.log | webtail
 ```
 
-After running this program, you can open the URL in a browser.
+After running this program, you can open the URL: http://localhost:8080 in a browser.
