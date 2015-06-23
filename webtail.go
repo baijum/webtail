@@ -30,6 +30,7 @@ var (
 	addr      = flag.String("addr", ":8080", "http service address")
 	homeTempl = template.Must(template.New("").Parse(homeHTML))
 	filename  string
+	stdIn     bool
 	upgrader  = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -57,9 +58,15 @@ func writer(ws *websocket.Conn) {
 		fileTicker.Stop()
 		ws.Close()
 	}()
-	f, _ := os.Open(filename)
-	r := bufio.NewReader(f)
-	defer f.Close()
+	var r *bufio.Reader
+	if !stdIn {
+		f, _ := os.Open(filename)
+		r = bufio.NewReader(f)
+		defer f.Close()
+	} else {
+		r = bufio.NewReader(os.Stdin)
+	}
+
 	for {
 		select {
 		case <-fileTicker.C:
@@ -117,9 +124,10 @@ func serveHome(w http.ResponseWriter, r *http.Request) {
 func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
-		log.Fatal("filename not specified")
+		stdIn = true
+	} else {
+		filename = flag.Args()[0]
 	}
-	filename = flag.Args()[0]
 	http.HandleFunc("/", serveHome)
 	http.HandleFunc("/ws", serveWs)
 	log.Println("Listening on", *addr)
