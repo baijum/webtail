@@ -158,8 +158,10 @@ const homeHTML = `<!DOCTYPE html>
                     data.text('Connection closed');
                 }
                 conn.onmessage = function(evt) {
-                    console.log('file updated');
-                    data.append("<pre>"+evt.data+"</pre>");
+		    if (evt.data != "") {
+                        console.log('file updated');
+                        data.append("<pre>"+evt.data+"</pre>");
+		    }
                 }
             })();
         </script>
