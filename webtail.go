@@ -99,9 +99,11 @@ func isExistingPath(a string, list []string) bool {
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	fn := r.FormValue("file")
-	//if !isExistingPath(fn, filenames) {
-	//	panic("File path doesn't exist in the original list")
-	//}
+	if !stdIn {
+		if !isExistingPath(fn, filenames) {
+			panic("File path doesn't exist in the original list")
+		}
+	}
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		if _, ok := err.(websocket.HandshakeError); !ok {
