@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"text/template"
 	"time"
 
@@ -29,7 +30,7 @@ const (
 var (
 	addr      = flag.String("addr", ":8080", "http service address")
 	homeTempl = template.Must(template.New("").Parse(homeHTML))
-	filename  string
+	filenames []string
 	stdIn     bool
 	upgrader  = websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -50,7 +51,7 @@ func reader(ws *websocket.Conn) {
 	}
 }
 
-func writer(ws *websocket.Conn) {
+func writer(ws *websocket.Conn, fn string) {
 	pingTicker := time.NewTicker(pingPeriod)
 	fileTicker := time.NewTicker(filePeriod)
 	defer func() {
@@ -60,7 +61,7 @@ func writer(ws *websocket.Conn) {
 	}()
 	var r *bufio.Reader
 	if !stdIn {
-		f, _ := os.Open(filename)
+		f, _ := os.Open(fn)
 		r = bufio.NewReader(f)
 		defer f.Close()
 	} else {
@@ -87,7 +88,20 @@ func writer(ws *websocket.Conn) {
 	}
 }
 
+func isExistingPath(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
 func serveWs(w http.ResponseWriter, r *http.Request) {
+	fn := r.FormValue("file")
+	if !isExistingPath(fn, filenames) {
+		panic("File path doesn't exist in the original list")
+	}
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		if _, ok := err.(websocket.HandshakeError); !ok {
@@ -96,7 +110,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go writer(ws)
+	go writer(ws, fn)
 	reader(ws)
 }
 
@@ -112,11 +126,15 @@ func serveHome(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	p := ""
 	var v = struct {
-		Host string
-		Data string
+		Host      string
+		Data      string
+		FileNames []string
+		StdIn     bool
 	}{
 		r.Host,
 		string(p),
+		filenames,
+		stdIn,
 	}
 	homeTempl.Execute(w, &v)
 }
@@ -126,7 +144,11 @@ func main() {
 	if flag.NArg() < 1 {
 		stdIn = true
 	} else {
-		filename = flag.Args()[0]
+		fnames := flag.Args()
+		for _, fn := range fnames {
+			p, _ := filepath.Abs(fn)
+			filenames = append(filenames, p)
+		}
 	}
 	http.HandleFunc("/", serveHome)
 	http.HandleFunc("/ws", serveWs)
@@ -149,20 +171,38 @@ const homeHTML = `<!DOCTYPE html>
         </style>
     </head>
     <body>
+        {{ if eq .StdIn false }}
+        File: <select id="fileName">
+	  {{ range $i, $fn := .FileNames }}
+	     <option value="{{ $fn }}">{{ $fn }}</option>
+	  {{ end }}
+	</select>
+	{{ end }}
         <div id="fileData"><pre>{{.Data}}</pre></div>
         <script type="text/javascript">
             (function() {
                 var data = $("#fileData");
-                var conn = new WebSocket("ws://{{.Host}}/ws");
-                conn.onclose = function(evt) {
+		var val = $("select option:selected").val();
+                function onclose(evt) {
                     data.text('Connection closed');
-                }
-                conn.onmessage = function(evt) {
+		    var val = $("select option:selected").val();
+		    conn = new WebSocket("ws://{{.Host}}/ws?file=" + val);
+		    data.empty();
+		    conn.onclose = onclose;
+		    conn.onmessage = onmessage;
+                };
+                function onmessage(evt) {
 		    if (evt.data != "") {
                         console.log('file updated');
                         data.append("<pre>"+evt.data+"</pre>");
 		    }
-                }
+                };
+		var conn = new WebSocket("ws://{{.Host}}/ws?file=" + val);
+		conn.onclose = onclose
+		conn.onmessage = onmessage
+		$("#fileName").change(function() {
+		    conn.close()
+		});
             })();
         </script>
     </body>
