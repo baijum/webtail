@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"flag"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -71,9 +72,9 @@ func writer(ws *websocket.Conn, fn string) {
 	for {
 		select {
 		case <-fileTicker.C:
-			p, _ := r.ReadBytes('\n')
+			p, err := r.ReadBytes('\n')
 
-			if p != nil {
+			if err != io.EOF {
 				ws.SetWriteDeadline(time.Now().Add(writeWait))
 				if err := ws.WriteMessage(websocket.TextMessage, p); err != nil {
 					return
@@ -166,7 +167,7 @@ const homeHTML = `<!DOCTYPE html>
         <title>WebSocket Example</title>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
         <style>
-          pre {
+          pre.line {
             margin: 0;
             padding: 0;
           }
@@ -194,10 +195,12 @@ const homeHTML = `<!DOCTYPE html>
 		    conn.onmessage = onmessage;
                 };
                 function onmessage(evt) {
-		    if (evt.data != "") {
                         console.log('file updated');
-                        data.append("<pre>"+evt.data+"</pre>");
-		    }
+			if (evt.data == "\n") {
+                          data.append("<pre class='blank'>"+evt.data+"</pre>");
+		        } else {
+                          data.append("<pre class='line'>"+evt.data+"</pre>");
+			}
                 };
 		var conn = new WebSocket("ws://{{.Host}}/ws?file=" + val);
 		conn.onclose = onclose
