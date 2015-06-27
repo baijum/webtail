@@ -164,7 +164,7 @@ func main() {
 const homeHTML = `<!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>WebSocket Example</title>
+        <title>Webtail</title>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
         <style>
           pre.line {
