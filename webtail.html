@@ -8,7 +8,7 @@
     function onmessage(event) {
       console.log(event.data);
     };
-    var conn = new WebSocket("ws://localhost:8081/ws")
+    var conn = new WebSocket("ws://{{.Host}}/ws")
     conn.onmessage = onmessage
   })();
   </script>

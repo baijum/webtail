@@ -24,7 +24,12 @@ func writer(ws *websocket.Conn) {
 func serveHome(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	t, _ := template.ParseFiles("webtail.html")
-	t.Execute(w, nil)
+	var v = struct {
+		Host string
+	}{
+		r.Host,
+	}
+	t.Execute(w, &v)
 }
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
