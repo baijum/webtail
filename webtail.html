@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head><title>Webtail</title></head>
+  <body>
+  </body>
+  <script type="text/javascript">
+  (function() {
+    function onmessage(event) {
+      console.log(event.data);
+    };
+    var conn = new WebSocket("ws://localhost:8081/ws")
+    conn.onmessage = onmessage
+  })();
+  </script>
+</html>
