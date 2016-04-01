@@ -1,6 +1,7 @@
 package main
 
 import (
+	"html/template"
 	"net/http"
 	"time"
 
@@ -20,12 +21,19 @@ func writer(ws *websocket.Conn) {
 	}
 }
 
+func serveHome(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	t, _ := template.ParseFiles("webtail.html")
+	t.Execute(w, nil)
+}
+
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	ws, _ := upgrader.Upgrade(w, r, nil)
 	go writer(ws)
 }
 
 func main() {
+	http.HandleFunc("/", serveHome)
 	http.HandleFunc("/ws", serveWs)
 	http.ListenAndServe(":8081", nil)
 }
