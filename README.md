@@ -22,4 +22,4 @@ This helps to use `tail` together with `webtail`:
 tail -f file.log | webtail
 ```
 
-After running this program, you can open the URL: http://localhost:8080 in a browser.
+After running this program, you can open the URL: [http://localhost:8080](http://localhost:8080) in a browser.
