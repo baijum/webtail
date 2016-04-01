@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"html/template"
+	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -14,9 +17,16 @@ var upgrader = websocket.Upgrader{
 
 func writer(ws *websocket.Conn) {
 	defer ws.Close()
+	f, _ := os.Open(os.Args[1])
+	r := bufio.NewReader(f)
+	defer f.Close()
 
 	for {
-		ws.WriteMessage(websocket.TextMessage, []byte("hello"))
+		p, err := r.ReadBytes('\n')
+
+		if err != io.EOF {
+			ws.WriteMessage(websocket.TextMessage, p)
+		}
 		time.Sleep(2 * time.Second)
 	}
 }
