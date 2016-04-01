@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -11,8 +12,12 @@ var upgrader = websocket.Upgrader{
 }
 
 func writer(ws *websocket.Conn) {
-	ws.WriteMessage(websocket.TextMessage, []byte("hello"))
-	ws.Close()
+	defer ws.Close()
+
+	for {
+		ws.WriteMessage(websocket.TextMessage, []byte("hello"))
+		time.Sleep(2 * time.Second)
+	}
 }
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
