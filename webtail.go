@@ -19,6 +19,7 @@ var upgrader = websocket.Upgrader{
 var (
 	stdIn    bool
 	filePath string
+	addr     = flag.String("addr", ":8081", "http service address")
 )
 
 func writer(ws *websocket.Conn) {
@@ -68,5 +69,5 @@ func main() {
 
 	http.HandleFunc("/", serveHome)
 	http.HandleFunc("/ws", serveWs)
-	http.ListenAndServe(":8081", nil)
+	http.ListenAndServe(*addr, nil)
 }
