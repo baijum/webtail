@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"html/template"
 	"io"
 	"net/http"
@@ -15,13 +16,18 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
+var (
+	stdIn    bool
+	filePath string
+)
+
 func writer(ws *websocket.Conn) {
 	defer ws.Close()
 	var r *bufio.Reader
-	if len(os.Args) == 1 {
+	if stdIn {
 		r = bufio.NewReader(os.Stdin)
 	} else {
-		f, _ := os.Open(os.Args[1])
+		f, _ := os.Open(filePath)
 		r = bufio.NewReader(f)
 		defer f.Close()
 	}
@@ -52,6 +58,14 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+
+	flag.Parse()
+	if flag.NArg() < 1 {
+		stdIn = true
+	} else {
+		filePath = flag.Args()[0]
+	}
+
 	http.HandleFunc("/", serveHome)
 	http.HandleFunc("/ws", serveWs)
 	http.ListenAndServe(":8081", nil)
