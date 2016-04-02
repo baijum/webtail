@@ -17,10 +17,14 @@ var upgrader = websocket.Upgrader{
 
 func writer(ws *websocket.Conn) {
 	defer ws.Close()
-	f, _ := os.Open(os.Args[1])
-	r := bufio.NewReader(f)
-	defer f.Close()
-
+	var r *bufio.Reader
+	if len(os.Args) == 1 {
+		r = bufio.NewReader(os.Stdin)
+	} else {
+		f, _ := os.Open(os.Args[1])
+		r = bufio.NewReader(f)
+		defer f.Close()
+	}
 	for {
 		p, err := r.ReadBytes('\n')
 
