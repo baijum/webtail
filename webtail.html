@@ -1,15 +1,42 @@
 <!DOCTYPE html>
 <html>
-  <head><title>Webtail</title></head>
+  <head>
+    <title>Webtail</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+    <style>
+      pre.line {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
   <body>
+    <div id="fileData"></div>
+    <script type="text/javascript">
+      (function() {
+        var data = $("#fileData");
+        function onclose(evt) {
+          data.text('Connection closed');
+          conn = new WebSocket("ws://{{.Host}}/ws");
+          data.empty();
+          conn.onclose = onclose;
+          conn.onmessage = onmessage;
+        };
+        function onmessage(evt) {
+          console.log('file updated');
+          if (evt.data == "\n") {
+            data.append("<pre class='blank'>"+evt.data+"</pre>");
+          } else {
+            data.append("<pre class='line'>"+evt.data+"</pre>");
+          }
+        };
+        var conn = new WebSocket("ws://{{.Host}}/ws");
+        conn.onclose = onclose
+        conn.onmessage = onmessage
+        $("#fileName").change(function() {
+        conn.close()
+        });
+      })();
+    </script>
   </body>
-  <script type="text/javascript">
-  (function() {
-    function onmessage(event) {
-      console.log(event.data);
-    };
-    var conn = new WebSocket("ws://{{.Host}}/ws")
-    conn.onmessage = onmessage
-  })();
-  </script>
 </html>
